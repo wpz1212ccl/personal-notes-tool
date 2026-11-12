@@ -1,0 +1,185 @@
+<!doctype html>
+<html lang="zh-CN" data-theme="light">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="color-scheme" content="light dark" />
+    <title>取词台</title>
+    <!-- 空 favicon：避免浏览器自动去要 /favicon.ico（保持零外部请求） -->
+    <link rel="icon" href="data:," />
+    <!-- 零外部资源：样式与脚本都是本地文件，字体只用系统字体（断网可用） -->
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <div class="app">
+      <header class="topbar">
+        <div class="brand">
+          <span class="brand-title">取词台</span>
+          <span class="brand-stats" id="topbar-stats"></span>
+          <!-- v34 T5（票 #218）：收句常驻状态条（10s 轮询 /api/capture/status） -->
+          <span class="capture-pill" id="capture-pill" hidden></span>
+        </div>
+        <div class="search-wrap">
+          <input
+            id="search"
+            class="search"
+            type="search"
+            placeholder="搜索词、释义或原句"
+            autocomplete="off"
+            spellcheck="false"
+            aria-label="搜索词条"
+          />
+          <kbd class="search-key" aria-hidden="true">/</kbd>
+        </div>
+        <nav class="filters" id="filters" aria-label="过滤词条">
+          <button class="chip" type="button" data-filter="all">全部</button>
+          <button class="chip" type="button" data-filter="due">待复习</button>
+          <button class="chip" type="button" data-filter="today">今天</button>
+          <button class="chip" type="button" data-filter="session">本会话</button>
+        </nav>
+        <div class="topbar-right">
+          <a
+            id="backlog-btn"
+            class="btn btn-ghost"
+            href="#/backlog"
+            title="打开待选句（0 句待挑）"
+            aria-label="打开待选句"
+          >
+            待选句 <span id="backlog-count" class="nav-count" hidden>0</span>
+          </a>
+          <button id="review-btn" class="btn btn-ghost" type="button">
+            复习 <kbd>r</kbd>
+          </button>
+          <button
+            id="theme-btn"
+            class="btn btn-ghost"
+            type="button"
+            title="切换深浅主题（t）"
+          >
+            ☾ 夜间
+          </button>
+          <a id="settings-btn" class="btn btn-ghost" href="#/settings" title="快捷键 / 词典 / 数据">
+            设置
+          </a>
+        </div>
+      </header>
+
+      <div class="layout">
+        <button
+          id="sidebar-handle"
+          class="shell-handle"
+          type="button"
+          aria-controls="sidebar"
+          aria-expanded="false"
+          aria-label="展开侧栏（[）"
+          title="展开侧栏（[）"
+        >
+          ☰<span class="shell-count" aria-hidden="true"></span>
+        </button>
+        <aside class="sidebar" id="sidebar" aria-label="会话与标签"></aside>
+        <main class="main" id="main" tabindex="-1"></main>
+      </div>
+    </div>
+
+    <div class="shell-scrim" id="shell-scrim" aria-hidden="true"></div>
+    <div class="drawer-backdrop" id="drawer-backdrop"></div>
+    <aside
+      class="drawer"
+      id="drawer"
+      aria-label="词条详情"
+      aria-hidden="true"
+      tabindex="-1"
+    ></aside>
+
+    <div class="overlay" id="help" aria-hidden="true">
+      <!-- W15（票 #189）：不声明 aria-modal —— 浮层没有焦点陷阱（Tab 能走到页面别处），
+           声明模态与行为不符反而误导读屏；按非模态 dialog 语义披露，Esc 关层照旧。 -->
+      <div
+        class="overlay-card"
+        role="dialog"
+        aria-label="快捷键帮助"
+      >
+        <div class="overlay-head">
+          <h2>快捷键</h2>
+          <button id="help-close" class="btn btn-subtle" type="button">
+            关闭 Esc
+          </button>
+        </div>
+        <table class="keys">
+          <tbody>
+            <tr>
+              <th>/</th>
+              <td>聚焦搜索框</td>
+            </tr>
+            <tr>
+              <th>j / k</th>
+              <td>下 / 上移动词条</td>
+            </tr>
+            <tr>
+              <th>s</th>
+              <td>顺序通读：切到星图，从收录最早的一段开始往下读（不是复习打分）</td>
+            </tr>
+            <tr>
+              <th>[</th>
+              <td>展开 / 收起侧栏</td>
+            </tr>
+            <tr>
+              <th>h</th>
+              <td>展开 / 收起会话动作（沉浸态右缘会话坞里的动作区）</td>
+            </tr>
+            <tr>
+              <th>f</th>
+              <td>切换沉浸星图（列表视图下会先切到星图）</td>
+            </tr>
+            <tr>
+              <th>Enter</th>
+              <td>打开详情抽屉</td>
+            </tr>
+            <tr>
+              <th>悬停 / 点击（高亮词）</th>
+              <td>悬停看释义（不发声）；点击 / Enter 播放发音</td>
+            </tr>
+            <tr>
+              <th>滚轮（阅读页纸面）</th>
+              <td>换上一段 / 下一段；正文能滚时先滚正文</td>
+            </tr>
+            <tr>
+              <th>r</th>
+              <td>去复习</td>
+            </tr>
+            <tr>
+              <th>Space</th>
+              <td>复习中：揭示背面（释义 / 原句 / 出处）</td>
+            </tr>
+            <tr>
+              <th>1–4</th>
+              <td>复习中：打分（1 again · 2 hard · 3 good · 4 easy）</td>
+            </tr>
+            <tr>
+              <th>t</th>
+              <td>切换深 / 浅主题（记住选择）</td>
+            </tr>
+            <tr>
+              <th>Esc</th>
+              <td>关抽屉 / 退出复习 / 返回列表 / 关帮助 / 清空搜索</td>
+            </tr>
+            <tr>
+              <th>?</th>
+              <td>这个帮助</td>
+            </tr>
+          </tbody>
+        </table>
+        <p class="overlay-note" id="help-hotkeys"></p>
+      </div>
+    </div>
+
+    <div class="toast-host" id="toast-host" aria-live="polite"></div>
+    <!-- v22 P3（票 #168）：文章页连播的纯函数模块（播放计划 / 分片）；app.js 转发调用 -->
+    <script src="article-read.js" defer></script>
+    <!-- v31：听看复习的高亮队列纯函数模块（排序 / 重叠簇 / 文章计划） -->
+    <script src="review-plan.js" defer></script>
+    <!-- v33：挑词界面的纯函数模块（kind 预判 / 重叠渲染计算 / 计数与筛选） -->
+    <script src="pick-plan.js" defer></script>
+    <script src="app.js" defer></script>
+  </body>
+</html>

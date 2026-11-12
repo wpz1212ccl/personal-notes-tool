@@ -1,0 +1,28 @@
+# OCR 内核的运行时依赖（spec §2.2）。venv 本身 gitignore，靠本文件重建：
+#   py -3.13 -m venv .venv
+#   .venv\Scripts\python.exe -m pip install -r requirements.txt
+pillow==12.3.0
+winrt-runtime==3.2.1
+winrt-Windows.Foundation==3.2.1
+winrt-Windows.Globalization==3.2.1
+winrt-Windows.Graphics.Imaging==3.2.1
+winrt-Windows.Media.Ocr==3.2.1
+winrt-Windows.Storage==3.2.1
+winrt-Windows.Storage.Streams==3.2.1
+# spec §6.2 / ADR 0005 的第二路 OCR：RapidOCR（PP-OCR 系调 ONNX Runtime，纯 CPU、离线）。
+# rapidocr-onnxruntime 的 wheel 自带 det/cls/rec 三个 ONNX 模型（约 14MB，落在
+# site-packages/rapidocr_onnxruntime/models/ 下），**不需要联网下载、不改任何缓存目录**；
+# onnxruntime 只作推理后端。两者都无外部服务/云依赖（离线自证见 bench_ocr.py 报告）。
+# 版本按「本机 Python 3.13 装得上 + 离线跑得通」实测钉住（ADR 估计 100~150MB，实际
+# 拉进 opencv-python/numpy/onnxruntime 后 venv 增量约 233MB，见 #44 报告）。
+rapidocr-onnxruntime==1.2.3
+onnxruntime==1.31.0
+# v5 §2.2 / §3 / §10：本机探针（comtypes + UIAutomationCore.dll 读地址栏）与媒体联动
+# （winrt 的 SMTC）。**全部惰性导入**——缺了只是探针/停播联动不可用，不影响取词。
+comtypes==1.4.17
+winrt-Windows.Media.Control==3.2.1
+winrt-Windows.Foundation.Collections==3.2.1
+# v11 §2 发音主路径（票 #106）：Edge 在线神经语音，中枢 `speech.py` 惰性导入。
+# pin 7.3.1 = 本机实测返回 `audio-24khz-48kbitrate-mono-mp3` 的版本；它带入 aiohttp 等。
+# 没装/导入失败只影响发音（503 no_backend），不影响取词台启动。
+edge-tts==7.3.1

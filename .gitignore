@@ -1,0 +1,32 @@
+# Python 工具（tools/英语取词/）的运行环境与产物
+tools/英语取词/.venv/
+tools/英语取词/logs/
+
+# v2 用户数据与本地词典（数据库是用户的词库，不进仓库；common_words.txt 仍随仓库走）
+tools/英语取词/data/*.db
+tools/英语取词/data/*.db-*
+tools/英语取词/data/*.db.bak-*
+tools/英语取词/data/ecdict_words.txt
+tools/英语取词/data/inbox.jsonl
+tools/英语取词/data/hotkey-status.json
+# v5：媒体会话联动跨 hub 重启的暂停状态（只存 app/标题短标识，一样是运行时产物）
+tools/英语取词/data/media-pause.json
+# v6 二期：用户维护的预设标签规则表（票 #85），缺失时回落代码内置默认
+tools/英语取词/data/preset-tags.json
+# v11：发音缓存（内容寻址 MP3，可再生成；不随导出/备份走）
+tools/英语取词/data/tts/
+# v33 T2（票 #208）：OCR 字幕带采样落池时存的底图（屏幕片段，运行时产物；
+# TTL 清理归 T7 的维护守护模式）
+tools/英语取词/data/subtitle_bands/
+
+__pycache__/
+.pytest_cache/
+
+# Playwright MCP 的会话产物（W1 用浏览器验收时会在工作目录留日志）
+.playwright-mcp/
+
+# 子代理用的 git worktree（编排隔离，不进仓库）
+.worktrees/
+# v35 桌宠：#230 烘焙产物（帧序列，可由烘焙脚本重烘，不进仓库）
+tools/英语取词/data/pet/
+tools/英语取词/data/pet-state.json

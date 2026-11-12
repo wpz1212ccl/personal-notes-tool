@@ -1,0 +1,17 @@
+{
+  "manifest_version": 3,
+  "name": "取词台 · 页面上下文上报",
+  "version": "0.2.2",
+  "description": "把当前页面 URL / 标题 / 播放进度上报到本机 127.0.0.1 的取词台 hub（只打本机，不联网）。",
+  "host_permissions": ["http://127.0.0.1:47811/*"],
+  "permissions": ["alarms"],
+  "background": { "service_worker": "sw.js" },
+  "content_scripts": [
+    {
+      "matches": ["<all_urls>"],
+      "js": ["cs.js"],
+      "all_frames": false,
+      "run_at": "document_idle"
+    }
+  ]
+}
